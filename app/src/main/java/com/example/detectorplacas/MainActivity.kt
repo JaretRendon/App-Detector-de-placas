@@ -105,6 +105,7 @@ import com.google.firebase.ktx.Firebase
  * --- MODELOS DE BASE DE DATOS (RELACIONAL) ---
  */
 
+// 1. Datos que vienen de la colección 'vehiculos'
 data class VehiculoBD(
     val marca: String = "",
     val modelo: String = "",
@@ -114,10 +115,12 @@ data class VehiculoBD(
     val propietario_id: String = ""
 )
 
+// 2. Datos que vienen de la colección 'propietarios'
 data class PropietarioBD(
     val nombre: String = ""
 )
 
+// 3. Objeto final para mostrar en la UI
 data class ResultadoFinal(
     val nombrePropietario: String,
     val marca: String,
@@ -129,6 +132,7 @@ data class ResultadoFinal(
 
 class MainActivity : ComponentActivity() {
 
+    // Los permisos necesarios, como acceso a la cámara
     private var hasCameraPermission by mutableStateOf(false)
 
     private val requestPermissionLauncher = registerForActivityResult(
@@ -167,7 +171,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun AppNavigation(hasCameraPermission: Boolean) {
     val navController = rememberNavController()
-
+    // Scanner es usado para leer la placa
     NavHost(navController = navController, startDestination = "scanner") {
         composable("scanner") {
             PantallaScanner(
@@ -175,6 +179,7 @@ fun AppNavigation(hasCameraPermission: Boolean) {
                 hasPermission = hasCameraPermission
             )
         }
+        // Jala los resultados de la búsqueda en la BD
         composable(
             route = "resultados/{placaId}",
             arguments = listOf(navArgument("placaId") { type = NavType.StringType })
@@ -190,9 +195,11 @@ fun AppNavigation(hasCameraPermission: Boolean) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
+// Pantalla donde se usa el scanner
 fun PantallaScanner(navController: NavController, hasPermission: Boolean) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
+    // Controladores de la cámara
     val cameraController = remember { LifecycleCameraController(context) }
     val cameraExecutor = remember { Executors.newSingleThreadExecutor() }
     var estaAnalizando by remember { mutableStateOf(false) }
@@ -304,6 +311,7 @@ fun PantallaScanner(navController: NavController, hasPermission: Boolean) {
                     modifier = Modifier.fillMaxSize()
                 )
 
+                // Lógica que pide alinear la placa en el recuadro
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
@@ -341,6 +349,7 @@ fun PantallaScanner(navController: NavController, hasPermission: Boolean) {
                 }
             }
 
+            // Muestra un mensaje que indica que está procesando la imagen a detectar
             if (estaAnalizando) {
                 CircularProgressIndicator(
                     modifier = Modifier.align(Alignment.Center)
@@ -395,6 +404,7 @@ fun PantallaResultados(placaId: String, navController: NavController) {
             .addOnFailureListener { estadoBusqueda = "error" }
     }
 
+    // Interfaz de la pantalla de resultados
     Scaffold(
         topBar = {
             TopAppBar(
@@ -419,7 +429,7 @@ fun PantallaResultados(placaId: String, navController: NavController) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
 
-            // TARJETA DE PLACA
+            // Tarjeta de la placa
             Card(
                 modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp),
                 elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
@@ -449,10 +459,10 @@ fun PantallaResultados(placaId: String, navController: NavController) {
                     Text("Consultando bases de datos...")
                 }
                 "no_encontrado" -> {
-                    // --- ALERTA ROJA DE NO ENCONTRADO ---
+                    // Mensaje en caso de no encontrar la placa en la BD
                     Card(
-                        colors = CardDefaults.cardColors(containerColor = Color(0xFFFFEBEE)), // Fondo rojo muy claro
-                        border = BorderStroke(2.dp, Color(0xFFE53935)), // Borde rojo fuerte
+                        colors = CardDefaults.cardColors(containerColor = Color(0xFFFFEBEE)), // rojito claro
+                        border = BorderStroke(2.dp, Color(0xFFE53935)), // rojito fuerte
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Column(
@@ -466,11 +476,13 @@ fun PantallaResultados(placaId: String, navController: NavController) {
                         }
                     }
                 }
+                // Mensajes de error si no se encuentra la placa en la BD
                 "error" -> {
                     Icon(Icons.Default.WifiOff, contentDescription = null, tint = Color.Red, modifier = Modifier.size(64.dp))
                     Text("Error de datos", color = Color.Red)
                     Text("No se pudo vincular el propietario.", color = Color.Gray, fontSize = 12.sp)
                 }
+                // Mensajes de éxito si se encuentra la placa en la BD
                 "exito" -> {
                     resultado?.let { datos ->
                         Card(
@@ -480,14 +492,14 @@ fun PantallaResultados(placaId: String, navController: NavController) {
                         ) {
                             Column(modifier = Modifier.padding(16.dp)) {
 
-                                // SECCIÓN 1: PROPIETARIO
+                                // Sección propietario
                                 Text("PROPIETARIO", style = MaterialTheme.typography.labelSmall, color = Color.Gray, fontWeight = FontWeight.Bold)
                                 Spacer(modifier = Modifier.height(8.dp))
                                 InfoRow(icon = Icons.Default.Person, label = "Nombre Completo", value = datos.nombrePropietario)
 
                                 Divider(modifier = Modifier.padding(vertical = 16.dp), color = Color.LightGray.copy(alpha = 0.5f))
 
-                                // SECCIÓN 2: DATOS DEL AUTO
+                                // Sección datos del auto
                                 Text("VEHÍCULO", style = MaterialTheme.typography.labelSmall, color = Color.Gray, fontWeight = FontWeight.Bold)
                                 Spacer(modifier = Modifier.height(8.dp))
 
@@ -513,7 +525,7 @@ fun PantallaResultados(placaId: String, navController: NavController) {
 
                                 Divider(modifier = Modifier.padding(vertical = 16.dp), color = Color.LightGray.copy(alpha = 0.5f))
 
-                                // SECCIÓN 3: ADEUDOS (Con lógica de Color ROJO/VERDE)
+                                // Sección de adeudos
                                 val (textoAdeudo, colorAdeudo) = when (val a = datos.adeudos) {
                                     is String -> {
                                         if (a.equals("Ninguno", ignoreCase = true) || a == "0")
@@ -535,7 +547,7 @@ fun PantallaResultados(placaId: String, navController: NavController) {
                                         Text("Estado de Adeudo", style = MaterialTheme.typography.labelMedium, color = Color.Gray)
                                         Text(
                                             text = textoAdeudo,
-                                            style = MaterialTheme.typography.headlineSmall, // Más grande
+                                            style = MaterialTheme.typography.headlineSmall,
                                             color = colorAdeudo,
                                             fontWeight = FontWeight.Bold
                                         )
@@ -546,6 +558,7 @@ fun PantallaResultados(placaId: String, navController: NavController) {
                     }
                 }
             }
+            // Botón para volver a escanear
             Spacer(modifier = Modifier.weight(1f))
             Button(
                 onClick = { navController.popBackStack() },
@@ -570,8 +583,9 @@ fun InfoRow(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String
     }
 }
 
+// Función para buscar y reconocer automáticamente la placa dentro del texto de la imagen
 private fun buscarPlaca(visionText: Text): String? {
-    val regexPlaca = Regex("^[A-Z0-9]{6,8}$")
+    val regexPlaca = Regex("^[A-Z0-9]{6,8}$") // Formato que debe tener la placa
     for (block in visionText.textBlocks) {
         val textoLimpio = block.text.replace(Regex("[\\s\\n-]"), "").uppercase()
         if (regexPlaca.matches(textoLimpio)) {
