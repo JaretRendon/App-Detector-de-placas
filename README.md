@@ -4,7 +4,7 @@ Instituto Tecnológico de Culiacán
 
  
 Toda la información detallada del proyecto, incluyendo el Manual de Usuario, Manual Técnico y Resumen del Proyecto, 
-se encuentran disponible en la carpeta de Documentacion del proyecto en Github:
+se encuentran disponible en la carpeta de Documentacion del proyecto en Github y el APK de la app en la seccion de releases en el github:
 
  
 
